@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './features/auth/AuthContext';
 import { ProtectedRoute } from './features/auth/ProtectedRoute';
 import LoginPage from './features/auth/LoginPage';
+import ProductListPage from './features/products/ProductListPage';
 
 export default function App() {
   return (
@@ -13,7 +14,7 @@ export default function App() {
             path="/"
             element={
               <ProtectedRoute>
-                <div className="p-4">中国库存系统</div>
+                <ProductListPage />
               </ProtectedRoute>
             }
           />
