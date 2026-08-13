@@ -6,13 +6,17 @@ import ProductListPage from './features/products/ProductListPage';
 import ProductForm from './features/products/ProductForm';
 import ProductDetailPage from './features/products/ProductDetailPage';
 import LedgerPage from './features/transactions/LedgerPage';
+import { ExchangeRateBadge } from './features/settings/ExchangeRateBadge';
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div>
-      <nav className="flex gap-4 border-b border-gray-200 px-4 py-3 text-sm">
-        <Link to="/" className="font-medium">商品列表</Link>
-        <Link to="/ledger" className="font-medium">全部流水</Link>
+      <nav className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-4 py-3 text-sm">
+        <div className="flex gap-4">
+          <Link to="/" className="font-medium">商品列表</Link>
+          <Link to="/ledger" className="font-medium">全部流水</Link>
+        </div>
+        <ExchangeRateBadge />
       </nav>
       {children}
     </div>
