@@ -3,6 +3,7 @@ import { AuthProvider } from './features/auth/AuthContext';
 import { ProtectedRoute } from './features/auth/ProtectedRoute';
 import LoginPage from './features/auth/LoginPage';
 import ProductListPage from './features/products/ProductListPage';
+import ProductForm from './features/products/ProductForm';
 
 export default function App() {
   return (
@@ -18,6 +19,8 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/products/new" element={<ProtectedRoute><ProductForm mode="create" /></ProtectedRoute>} />
+          <Route path="/products/:id/edit" element={<ProtectedRoute><ProductForm mode="edit" /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
