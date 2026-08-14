@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useExchangeRate } from '../settings/useExchangeRate';
+import { coerceFieldValue } from './productFields';
 import type { NewProduct, Product } from '../../types/database';
 
 const emptyForm: NewProduct = {
@@ -50,9 +51,7 @@ export default function ProductForm({ mode }: { mode: 'create' | 'edit' }) {
     return {
       value: form[key] ?? '',
       onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-        const raw = e.target.value;
-        const isNumeric = typeof emptyForm[key] === 'number' || emptyForm[key] === null;
-        setForm((f) => ({ ...f, [key]: raw === '' ? null : isNumeric ? Number(raw) : raw }));
+        setForm((f) => ({ ...f, [key]: coerceFieldValue(key, e.target.value) }));
       },
     };
   }
