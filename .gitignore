@@ -13,8 +13,11 @@ dist-ssr
 *.local
 
 # Environment variables
+# 本地开发和数据导入用的密钥，不进仓库
 .env
 .env.migration
+# 注意：.env.production 是故意提交的 —— 里面只有可公开的 publishable key，
+# 它本来就会被打包进网页 JS，放这里是为了让 Cloudflare 构建时能拿到。
 
 # Editor directories and files
 .vscode/*
