@@ -1,5 +1,7 @@
+-- 这个脚本可以反复执行：每一句都先判断存在与否，重跑不会报 already exists。
+
 -- Products (商品资料)
-create table products (
+create table if not exists products (
   id bigint generated always as identity primary key,
   name_cn text not null,
   name_en text,
@@ -23,9 +25,13 @@ create table products (
 );
 
 -- Transactions (出入库流水)
-create type transaction_type as enum ('inbound', 'outbound', 'order');
+do $$ begin
+  create type transaction_type as enum ('inbound', 'outbound', 'order');
+exception
+  when duplicate_object then null;
+end $$;
 
-create table transactions (
+create table if not exists transactions (
   id bigint generated always as identity primary key,
   product_id bigint not null references products(id) on delete cascade,
   type transaction_type not null,
@@ -37,17 +43,18 @@ create table transactions (
 );
 
 -- Exchange rate (single-row settings table)
-create table exchange_rate (
+create table if not exists exchange_rate (
   id smallint primary key default 1,
   rmb_to_jpy numeric not null,
   updated_by uuid references auth.users(id),
   updated_at timestamptz not null default now(),
   constraint exchange_rate_single_row check (id = 1)
 );
-insert into exchange_rate (id, rmb_to_jpy) values (1, 20.0);
+insert into exchange_rate (id, rmb_to_jpy) values (1, 20.0)
+  on conflict (id) do nothing;
 
 -- Current-stock view: opening_stock + inbound - outbound, plus latest movement for the list page
-create view products_with_stock
+create or replace view products_with_stock
 with (security_invoker = true) as
 select
   p.*,
@@ -78,10 +85,13 @@ alter table products enable row level security;
 alter table transactions enable row level security;
 alter table exchange_rate enable row level security;
 
+drop policy if exists "authenticated full access" on products;
 create policy "authenticated full access" on products
   for all to authenticated using (true) with check (true);
+drop policy if exists "authenticated full access" on transactions;
 create policy "authenticated full access" on transactions
   for all to authenticated using (true) with check (true);
+drop policy if exists "authenticated full access" on exchange_rate;
 create policy "authenticated full access" on exchange_rate
   for all to authenticated using (true) with check (true);
 
