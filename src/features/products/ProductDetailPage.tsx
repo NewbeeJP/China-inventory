@@ -2,14 +2,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useProduct } from './useProduct';
 import { useTransactions } from '../transactions/useTransactions';
 import { TransactionForm } from '../transactions/TransactionForm';
-import type { TransactionType } from '../../types/database';
+import { TYPE_LABELS, TYPE_STYLES } from '../transactions/transactionType';
 
-const typeStyles: Record<TransactionType, string> = {
-  inbound: 'bg-green-50 text-green-700',
-  outbound: 'bg-red-50 text-red-700',
-  order: 'bg-gray-100 text-gray-600',
-};
-const typeLabels: Record<TransactionType, string> = { inbound: '入库', outbound: '出库', order: '订单' };
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -73,14 +67,22 @@ export default function ProductDetailPage() {
             {transactions.map((t) => (
               <div key={t.id} className="flex items-center gap-3 border-b border-gray-200 py-2.5">
                 <span className="w-16 shrink-0 text-xs text-gray-400">{t.date}</span>
-                <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs ${typeStyles[t.type]}`}>
-                  {typeLabels[t.type]}
+                <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs ${TYPE_STYLES[t.type]}`}>
+                  {TYPE_LABELS[t.type]}
                 </span>
                 <span className="flex-1 text-sm">
                   {t.type === 'outbound' ? '-' : '+'}
                   {t.quantity}
                 </span>
-                <span className="text-xs text-gray-400">{t.note ?? ''}</span>
+                <span className="text-xs text-gray-400">
+                  {t.batch ? (
+                    <Link to={`/batches/${t.batch.id}`} className="underline">
+                      {t.batch.name}
+                    </Link>
+                  ) : (
+                    t.note ?? ''
+                  )}
+                </span>
               </div>
             ))}
             {transactions.length === 0 && <p className="py-2 text-sm text-gray-400">还没有流水记录</p>}

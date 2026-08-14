@@ -55,6 +55,7 @@ describe('transactionsToRows', () => {
     const tx: TransactionWithProduct = {
       id: 1,
       product_id: 1,
+      batch_id: null,
       type: 'outbound',
       quantity: 500,
       date: '2026-08-11',
@@ -62,6 +63,7 @@ describe('transactionsToRows', () => {
       created_by: null,
       created_at: '',
       product: { id: 1, name_cn: '示例商品 A', sku: 'tube-120P' },
+      batch: null,
     };
     expect(transactionsToRows([tx])).toEqual([
       { 日期: '2026-08-11', 品名: '示例商品 A', 品番: 'tube-120P', 类型: '出库', 数量: 500, 备注: '商事海运 3/16装柜' },

@@ -30,9 +30,20 @@ export interface ProductWithStock extends Product {
   latest_quantity: number | null;
 }
 
+export interface Batch {
+  id: number;
+  name: string;
+  type: TransactionType;
+  date: string;
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
 export interface Transaction {
   id: number;
   product_id: number;
+  batch_id: number | null;
   type: TransactionType;
   quantity: number;
   date: string;
@@ -43,6 +54,15 @@ export interface Transaction {
 
 export interface TransactionWithProduct extends Transaction {
   product: Pick<Product, 'id' | 'name_cn' | 'sku'>;
+  batch: Pick<Batch, 'id' | 'name'> | null;
+}
+
+// 批次明细行：算汇总要用到商品的箱规、重量、体积和单价
+export interface BatchLine extends Transaction {
+  product: Pick<
+    Product,
+    'id' | 'name_cn' | 'sku' | 'box_qty' | 'net_weight' | 'gross_weight' | 'cbm' | 'price_jpy' | 'price_rmb'
+  >;
 }
 
 export interface ExchangeRate {
@@ -54,3 +74,4 @@ export interface ExchangeRate {
 
 export type NewProduct = Omit<Product, 'id' | 'created_at' | 'updated_at'>;
 export type NewTransaction = Omit<Transaction, 'id' | 'created_at' | 'created_by'>;
+export type NewBatch = Omit<Batch, 'id' | 'created_at' | 'created_by'>;

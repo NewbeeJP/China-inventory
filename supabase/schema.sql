@@ -31,6 +31,19 @@ exception
   when duplicate_object then null;
 end $$;
 
+-- Batches (批次): one shipment / factory delivery / factory order, covering many
+-- products at once. A batch carries a single type -- a container going out is
+-- all outbound, a delivery arriving is all inbound.
+create table if not exists batches (
+  id bigint generated always as identity primary key,
+  name text not null,
+  type transaction_type not null,
+  date date not null default current_date,
+  note text,
+  created_by uuid references auth.users(id),
+  created_at timestamptz not null default now()
+);
+
 create table if not exists transactions (
   id bigint generated always as identity primary key,
   product_id bigint not null references products(id) on delete cascade,
@@ -41,6 +54,11 @@ create table if not exists transactions (
   created_by uuid references auth.users(id),
   created_at timestamptz not null default now()
 );
+
+-- Nullable on purpose: a one-off entry that belongs to no batch stays valid.
+alter table transactions add column if not exists batch_id bigint references batches(id) on delete set null;
+create index if not exists transactions_batch_id_idx on transactions (batch_id);
+create index if not exists transactions_product_id_idx on transactions (product_id);
 
 -- Exchange rate (single-row settings table)
 create table if not exists exchange_rate (
@@ -84,6 +102,7 @@ left join lateral (
 alter table products enable row level security;
 alter table transactions enable row level security;
 alter table exchange_rate enable row level security;
+alter table batches enable row level security;
 
 drop policy if exists "authenticated full access" on products;
 create policy "authenticated full access" on products
@@ -93,6 +112,9 @@ create policy "authenticated full access" on transactions
   for all to authenticated using (true) with check (true);
 drop policy if exists "authenticated full access" on exchange_rate;
 create policy "authenticated full access" on exchange_rate
+  for all to authenticated using (true) with check (true);
+drop policy if exists "authenticated full access" on batches;
+create policy "authenticated full access" on batches
   for all to authenticated using (true) with check (true);
 
 -- Realtime: tables must belong to the supabase_realtime publication before the
@@ -104,7 +126,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['products', 'transactions', 'exchange_rate'] loop
+  foreach t in array array['products', 'transactions', 'exchange_rate', 'batches'] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t

@@ -10,7 +10,7 @@ export function useTransactions(productId?: number) {
   const refetch = useCallback(async () => {
     let query = supabase
       .from('transactions')
-      .select('*, product:products(id, name_cn, sku)')
+      .select('*, product:products(id, name_cn, sku), batch:batches(id, name)')
       .order('date', { ascending: false })
       .order('created_at', { ascending: false });
     if (productId != null) query = query.eq('product_id', productId);

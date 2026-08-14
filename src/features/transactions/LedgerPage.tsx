@@ -1,15 +1,11 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTransactions } from './useTransactions';
 import { TransactionForm } from './TransactionForm';
 import { exportTransactionsToExcel } from '../../lib/exportExcel';
+import { TYPE_LABELS, TYPE_STYLES } from './transactionType';
 import type { TransactionType } from '../../types/database';
 
-const typeStyles: Record<TransactionType, string> = {
-  inbound: 'bg-green-50 text-green-700',
-  outbound: 'bg-red-50 text-red-700',
-  order: 'bg-gray-100 text-gray-600',
-};
-const typeLabels: Record<TransactionType, string> = { inbound: '入库', outbound: '出库', order: '订单' };
 
 export default function LedgerPage() {
   const { transactions, loading } = useTransactions();
@@ -28,7 +24,9 @@ export default function LedgerPage() {
       if (!term) return true;
       return (
         t.product.name_cn.toLowerCase().includes(term) ||
-        (t.product.sku ?? '').toLowerCase().includes(term)
+        (t.product.sku ?? '').toLowerCase().includes(term) ||
+        (t.note ?? '').toLowerCase().includes(term) ||
+        (t.batch?.name ?? '').toLowerCase().includes(term)
       );
     });
   }, [transactions, search, typeFilter, from, to]);
@@ -40,7 +38,7 @@ export default function LedgerPage() {
       <div className="mb-4 flex flex-wrap gap-2">
         <input
           type="text"
-          placeholder="搜索品名 / 品番"
+          placeholder="搜索品名 / 品番 / 批次 / 备注"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="min-w-[160px] flex-[2] rounded-md border border-gray-300 px-3 py-2"
@@ -83,6 +81,7 @@ export default function LedgerPage() {
               <th className="px-2 py-2 font-medium">品番</th>
               <th className="px-2 py-2 font-medium">类型</th>
               <th className="px-2 py-2 text-right font-medium">数量</th>
+              <th className="px-2 py-2 font-medium">批次</th>
               <th className="px-2 py-2 font-medium">备注</th>
             </tr>
           </thead>
@@ -93,9 +92,18 @@ export default function LedgerPage() {
                 <td className="px-2 py-2">{t.product.name_cn}</td>
                 <td className="px-2 py-2 text-gray-400">{t.product.sku ?? '-'}</td>
                 <td className="px-2 py-2">
-                  <span className={`rounded-md px-2 py-0.5 text-xs ${typeStyles[t.type]}`}>{typeLabels[t.type]}</span>
+                  <span className={`rounded-md px-2 py-0.5 text-xs ${TYPE_STYLES[t.type]}`}>{TYPE_LABELS[t.type]}</span>
                 </td>
                 <td className="px-2 py-2 text-right">{t.quantity}</td>
+                <td className="px-2 py-2">
+                  {t.batch ? (
+                    <Link to={`/batches/${t.batch.id}`} className="text-gray-700 underline">
+                      {t.batch.name}
+                    </Link>
+                  ) : (
+                    <span className="text-gray-300">-</span>
+                  )}
+                </td>
                 <td className="px-2 py-2 text-gray-500">{t.note ?? ''}</td>
               </tr>
             ))}

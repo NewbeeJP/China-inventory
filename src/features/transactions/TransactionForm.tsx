@@ -1,13 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../auth/AuthContext';
+import { TRANSACTION_TYPES, TYPE_LABELS } from './transactionType';
 import type { NewTransaction, Product, TransactionType } from '../../types/database';
 
-const typeLabels: Record<TransactionType, string> = {
-  inbound: '入库',
-  outbound: '出库',
-  order: '订单',
-};
 
 export function TransactionForm({
   productId,
@@ -41,6 +37,7 @@ export function TransactionForm({
 
     const payload: NewTransaction & { created_by?: string } = {
       product_id: targetProductId,
+      batch_id: null, // 这里是单笔登记；整批录入走「批次」页面
       type,
       quantity: Number(quantity),
       date,
@@ -91,7 +88,7 @@ export function TransactionForm({
         </select>
       )}
       <div className="mb-2 flex gap-2">
-        {(['inbound', 'outbound', 'order'] as TransactionType[]).map((t) => (
+        {TRANSACTION_TYPES.map((t) => (
           <button
             key={t}
             type="button"
@@ -100,7 +97,7 @@ export function TransactionForm({
               type === t ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-300 text-gray-700'
             }`}
           >
-            {typeLabels[t]}
+            {TYPE_LABELS[t]}
           </button>
         ))}
       </div>
