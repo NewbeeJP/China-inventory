@@ -28,6 +28,9 @@ function makeProduct(overrides: Partial<ProductWithStock> = {}): ProductWithStoc
     latest_date: '2026-08-11',
     latest_type: 'outbound',
     latest_quantity: 500,
+    inbound_total: 0,
+    outbound_total: 0,
+    order_total: 0,
     ...overrides,
   };
 }

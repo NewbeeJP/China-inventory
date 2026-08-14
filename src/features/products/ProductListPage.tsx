@@ -60,60 +60,69 @@ export default function ProductListPage() {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px] border-collapse text-sm">
+        <table className="w-auto border-collapse text-xs">
           <thead>
             <tr className="border-b border-gray-300 text-left text-gray-500">
-              <th className="px-2 py-2 font-medium">编号</th>
-              <th className="px-2 py-2 font-medium">尺寸(长×宽×高)</th>
-              <th className="px-2 py-2 font-medium">品番</th>
-              <th className="px-2 py-2 font-medium">材质</th>
-              <th className="px-2 py-2 text-right font-medium">日元单价</th>
-              <th className="px-2 py-2 text-right font-medium">单价(RMB)</th>
-              <th className="px-2 py-2 text-right font-medium">实时库存</th>
-              <th className="px-2 py-2 font-medium">最近动向</th>
+              <th className="px-2 py-1.5 font-medium">编号</th>
+              <th className="px-2 py-1.5 font-medium">品番</th>
+              <th className="px-2 py-1.5 font-medium">材质</th>
+              <th className="px-2 py-1.5 text-right font-medium">实时库存</th>
+              <th className="px-2 py-1.5 text-right font-medium">库存总数</th>
+              <th className="px-2 py-1.5 text-right font-medium">出库总数</th>
+              <th className="px-2 py-1.5 text-right font-medium">订单总数</th>
+              <th className="px-2 py-1.5 text-right font-medium">日元单价</th>
+              <th className="px-2 py-1.5 text-right font-medium">单价(RMB)</th>
+              <th className="px-2 py-1.5 font-medium">包装尺寸</th>
+              <th className="px-2 py-1.5 font-medium">最近出库</th>
             </tr>
           </thead>
           <tbody>
             {grouped.map(({ name, items }) => (
               <Fragment key={name}>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <td colSpan={8} className="px-2 py-1.5 font-medium">
+                <tr className="border-b border-gray-200 bg-gray-100">
+                  <td colSpan={11} className="whitespace-nowrap px-2 py-1.5 font-medium">
                     {name}
                     <span className="ml-2 font-normal text-gray-400">
-                      {items.length} 个规格 · 合计库存 {items.reduce((sum, p) => sum + p.current_stock, 0).toLocaleString()}
+                      {items.length} 个规格 · 合计库存{' '}
+                      {items.reduce((sum, p) => sum + p.current_stock, 0).toLocaleString()}
                     </span>
                   </td>
                 </tr>
                 {items.map((p) => (
                   <tr
                     key={p.id}
-                    className={`border-b border-gray-200 ${isLowStock(p) ? 'bg-red-50' : ''}`}
+                    className={`border-b border-gray-100 ${isLowStock(p) ? 'bg-red-50' : ''}`}
                   >
-                    <td className="px-2 py-2 text-gray-400">
-                      <Link to={`/products/${p.id}`} className="block">
-                        {String(p.id).padStart(4, '0')}
-                      </Link>
+                    <td className="whitespace-nowrap px-2 py-1 text-gray-400">
+                      <Link to={`/products/${p.id}`}>{String(p.id).padStart(4, '0')}</Link>
                     </td>
-                    <td className="px-2 py-2">
-                      <Link to={`/products/${p.id}`} className="block">
-                        {p.length && p.width && p.height ? `${p.length}×${p.width}×${p.height}` : '-'}
-                      </Link>
+                    <td className="whitespace-nowrap px-2 py-1 font-medium text-gray-900">
+                      <Link to={`/products/${p.id}`}>{p.sku ?? '-'}</Link>
                     </td>
-                    <td className="px-2 py-2 text-gray-400">{p.sku ?? '-'}</td>
-                    <td className="px-2 py-2">{p.material ?? '-'}</td>
-                    <td className="px-2 py-2 text-right">{p.price_jpy ?? '-'}</td>
-                    <td className="px-2 py-2 text-right">{p.price_rmb ?? '-'}</td>
+                    <td className="whitespace-nowrap px-2 py-1">{p.material ?? '-'}</td>
                     <td
-                      className={`px-2 py-2 text-right ${
-                        isLowStock(p) ? 'font-medium text-red-700' : ''
+                      className={`whitespace-nowrap px-2 py-1 text-right ${
+                        isLowStock(p) ? 'font-medium text-red-700' : 'font-medium'
                       }`}
                     >
-                      {p.current_stock}
+                      {p.current_stock.toLocaleString()}
                     </td>
-                    <td className="px-2 py-2 text-gray-500">
-                      {p.latest_date
-                        ? `${p.latest_date} ${p.latest_type === 'inbound' ? '入库' : '出库'} ${p.latest_quantity}`
-                        : '-'}
+                    <td className="whitespace-nowrap px-2 py-1 text-right text-gray-600">
+                      {p.inbound_total.toLocaleString()}
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-1 text-right text-gray-600">
+                      {p.outbound_total.toLocaleString()}
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-1 text-right text-gray-600">
+                      {p.order_total.toLocaleString()}
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-1 text-right">{p.price_jpy ?? '-'}</td>
+                    <td className="whitespace-nowrap px-2 py-1 text-right">{p.price_rmb ?? '-'}</td>
+                    <td className="whitespace-nowrap px-2 py-1 text-gray-400">
+                      {p.length && p.width && p.height ? `${p.length}×${p.width}×${p.height}` : '-'}
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-1 text-gray-500">
+                      {p.latest_date ? `${p.latest_date} 出库 ${p.latest_quantity}` : '-'}
                     </td>
                   </tr>
                 ))}

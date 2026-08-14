@@ -71,7 +71,9 @@ create table if not exists exchange_rate (
 insert into exchange_rate (id, rmb_to_jpy) values (1, 20.0)
   on conflict (id) do nothing;
 
--- Current-stock view: opening_stock + inbound - outbound, plus latest movement for the list page
+-- Current-stock view. 除了实时库存，还把三个累计数一起算出来，
+-- 对应原表的「库存总数 / 出库总数 / 订单总数」——原来靠手工维护，这里自动汇总。
+-- latest_* 只看出库（海运发货），即最近一次发了多少。
 create or replace view products_with_stock
 with (security_invoker = true) as
 select
@@ -81,19 +83,23 @@ select
     - coalesce(agg.outbound_total, 0) as current_stock,
   latest.date as latest_date,
   latest.type as latest_type,
-  latest.quantity as latest_quantity
+  latest.quantity as latest_quantity,
+  coalesce(agg.inbound_total, 0) as inbound_total,
+  coalesce(agg.outbound_total, 0) as outbound_total,
+  coalesce(agg.order_total, 0) as order_total
 from products p
 left join lateral (
   select
     sum(case when t.type = 'inbound' then t.quantity else 0 end) as inbound_total,
-    sum(case when t.type = 'outbound' then t.quantity else 0 end) as outbound_total
+    sum(case when t.type = 'outbound' then t.quantity else 0 end) as outbound_total,
+    sum(case when t.type = 'order' then t.quantity else 0 end) as order_total
   from transactions t
   where t.product_id = p.id
 ) agg on true
 left join lateral (
   select t2.date, t2.type, t2.quantity
   from transactions t2
-  where t2.product_id = p.id and t2.type in ('inbound', 'outbound')
+  where t2.product_id = p.id and t2.type = 'outbound'
   order by t2.date desc, t2.created_at desc
   limit 1
 ) latest on true;

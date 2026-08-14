@@ -28,6 +28,9 @@ function makeProduct(overrides: Partial<ProductWithStock> = {}): ProductWithStoc
     latest_date: null,
     latest_type: null,
     latest_quantity: null,
+    inbound_total: 0,
+    outbound_total: 0,
+    order_total: 0,
     ...overrides,
   };
 }

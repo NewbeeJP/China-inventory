@@ -28,6 +28,9 @@ export interface ProductWithStock extends Product {
   latest_date: string | null;
   latest_type: TransactionType | null;
   latest_quantity: number | null;
+  inbound_total: number;
+  outbound_total: number;
+  order_total: number;
 }
 
 export interface Batch {
