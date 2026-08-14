@@ -85,3 +85,10 @@ create policy "authenticated full access" on transactions
   for all to authenticated using (true) with check (true);
 create policy "authenticated full access" on exchange_rate
   for all to authenticated using (true) with check (true);
+
+-- Realtime: tables must join the supabase_realtime publication before the
+-- client receives postgres_changes events. Without this, one person's entry
+-- never shows up on anyone else's screen until they reload.
+alter publication supabase_realtime add table products;
+alter publication supabase_realtime add table transactions;
+alter publication supabase_realtime add table exchange_rate;

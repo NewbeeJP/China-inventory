@@ -7,6 +7,7 @@ import ProductForm from './features/products/ProductForm';
 import ProductDetailPage from './features/products/ProductDetailPage';
 import LedgerPage from './features/transactions/LedgerPage';
 import { ExchangeRateBadge } from './features/settings/ExchangeRateBadge';
+import { ErrorBoundary } from './ErrorBoundary';
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -18,7 +19,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         </div>
         <ExchangeRateBadge />
       </nav>
-      {children}
+      <ErrorBoundary>{children}</ErrorBoundary>
     </div>
   );
 }
