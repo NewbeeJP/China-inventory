@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
-import { jpyFromRmb, rmbFromJpy } from '../../lib/currency';
 import { useExchangeRate } from '../settings/useExchangeRate';
 import type { NewProduct, Product } from '../../types/database';
 
@@ -56,24 +55,6 @@ export default function ProductForm({ mode }: { mode: 'create' | 'edit' }) {
         setForm((f) => ({ ...f, [key]: raw === '' ? null : isNumeric ? Number(raw) : raw }));
       },
     };
-  }
-
-  function handleJpyChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const jpy = e.target.value === '' ? null : Number(e.target.value);
-    setForm((f) => ({
-      ...f,
-      price_jpy: jpy,
-      price_rmb: jpy != null && rate ? rmbFromJpy(jpy, rate.rmb_to_jpy) : f.price_rmb,
-    }));
-  }
-
-  function handleRmbChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const rmb = e.target.value === '' ? null : Number(e.target.value);
-    setForm((f) => ({
-      ...f,
-      price_rmb: rmb,
-      price_jpy: rmb != null && rate ? jpyFromRmb(rmb, rate.rmb_to_jpy) : f.price_jpy,
-    }));
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -159,26 +140,21 @@ export default function ProductForm({ mode }: { mode: 'create' | 'edit' }) {
 
       <section>
         <p className="mb-2 text-sm text-gray-500">
-          价格 {rate && <span className="text-gray-400">（当前汇率 1 RMB = {rate.rmb_to_jpy} JPY）</span>}
+          价格
+          {rate && (
+            <span className="text-gray-400">
+              （两个价格都手动填写，互不换算；当前汇率 1 RMB = {rate.rmb_to_jpy} JPY，仅供参考）
+            </span>
+          )}
         </p>
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="mb-1 block text-xs text-gray-400">日元单价</label>
-            <input
-              type="number"
-              value={form.price_jpy ?? ''}
-              onChange={handleJpyChange}
-              className="w-full rounded-md border border-gray-300 px-3 py-2"
-            />
+            <input type="number" className="w-full rounded-md border border-gray-300 px-3 py-2" {...field('price_jpy')} />
           </div>
           <div>
             <label className="mb-1 block text-xs text-gray-400">单价(RMB)</label>
-            <input
-              type="number"
-              value={form.price_rmb ?? ''}
-              onChange={handleRmbChange}
-              className="w-full rounded-md border border-gray-300 px-3 py-2"
-            />
+            <input type="number" className="w-full rounded-md border border-gray-300 px-3 py-2" {...field('price_rmb')} />
           </div>
         </div>
       </section>
