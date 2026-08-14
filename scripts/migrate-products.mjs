@@ -68,16 +68,6 @@ function hasAnyData(row) {
   );
 }
 
-function sizeSuffix(row) {
-  const l = toNumberOrNull(row[COLUMNS.length]);
-  const w = toNumberOrNull(row[COLUMNS.width]);
-  const h = toNumberOrNull(row[COLUMNS.height]);
-  if (l !== null && w !== null && h !== null) return `${l}×${w}×${h}`;
-  const jpy = toNumberOrNull(row[COLUMNS.price_jpy]);
-  if (jpy !== null) return `${jpy}日元`;
-  return null;
-}
-
 const workbook = XLSX.read(readFileSync(SOURCE_FILE));
 const sheet = workbook.Sheets[workbook.SheetNames[0]];
 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true });
@@ -103,10 +93,10 @@ rows.slice(FIRST_DATA_ROW).forEach((row, i) => {
     return;
   }
 
-  const suffix = sizeSuffix(row);
   products.push({
     excelRow,
-    name_cn: suffix ? `${family.name_cn} ${suffix}` : family.name_cn,
+    // 品名保持大类名，规格靠长宽高等字段区分
+    name_cn: family.name_cn,
     name_en: family.name_en,
     material: family.material,
     sku: toTextOrNull(row[COLUMNS.sku]),
@@ -123,15 +113,6 @@ rows.slice(FIRST_DATA_ROW).forEach((row, i) => {
     opening_stock: toNumberOrNull(row[COLUMNS.opening_stock]) ?? 0,
   });
 });
-
-// Two rows can share a family, size and price, leaving identical names.
-// Number the repeats so each one stays distinguishable in the app.
-const nameCounts = new Map();
-for (const p of products) {
-  const seen = (nameCounts.get(p.name_cn) ?? 0) + 1;
-  nameCounts.set(p.name_cn, seen);
-  if (seen > 1) p.name_cn = `${p.name_cn} (${seen})`;
-}
 
 const totalStock = products.reduce((sum, p) => sum + p.opening_stock, 0);
 console.log(`Parsed ${products.length} products from ${SOURCE_FILE}.`);

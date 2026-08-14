@@ -5,7 +5,9 @@ import { useAuth } from '../auth/AuthContext';
 import { TRANSACTION_TYPES, TYPE_LABELS } from '../transactions/transactionType';
 import type { Product, TransactionType } from '../../types/database';
 
-type PickerProduct = Pick<Product, 'id' | 'name_cn' | 'sku' | 'box_qty'> & { current_stock: number };
+type PickerProduct = Pick<Product, 'id' | 'name_cn' | 'sku' | 'box_qty' | 'length' | 'width' | 'height'> & {
+  current_stock: number;
+};
 
 export default function BatchFormPage() {
   const { session } = useAuth();
@@ -26,7 +28,7 @@ export default function BatchFormPage() {
   useEffect(() => {
     supabase
       .from('products_with_stock')
-      .select('id, name_cn, sku, box_qty, current_stock')
+      .select('id, name_cn, sku, box_qty, length, width, height, current_stock')
       .order('name_cn')
       .then(({ data }) => setProducts((data ?? []) as PickerProduct[]));
   }, []);
@@ -173,7 +175,12 @@ export default function BatchFormPage() {
               const raw = quantities[p.id] ?? '';
               return (
                 <tr key={p.id} className={`border-b border-gray-200 ${raw ? 'bg-amber-50' : ''}`}>
-                  <td className="px-2 py-1.5">{p.name_cn}</td>
+                  <td className="px-2 py-1.5">
+                    {p.name_cn}
+                    {p.length && p.width && p.height && (
+                      <span className="ml-2 text-xs text-gray-400">{p.length}×{p.width}×{p.height}</span>
+                    )}
+                  </td>
                   <td className="px-2 py-1.5 text-gray-400">{p.sku ?? '-'}</td>
                   <td className="px-2 py-1.5 text-right text-gray-500">{p.box_qty ?? '-'}</td>
                   <td className="px-2 py-1.5 text-right">{p.current_stock}</td>
