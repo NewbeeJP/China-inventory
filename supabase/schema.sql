@@ -86,9 +86,21 @@ create policy "authenticated full access" on transactions
 create policy "authenticated full access" on exchange_rate
   for all to authenticated using (true) with check (true);
 
--- Realtime: tables must join the supabase_realtime publication before the
--- client receives postgres_changes events. Without this, one person's entry
--- never shows up on anyone else's screen until they reload.
-alter publication supabase_realtime add table products;
-alter publication supabase_realtime add table transactions;
-alter publication supabase_realtime add table exchange_rate;
+-- Realtime: tables must belong to the supabase_realtime publication before the
+-- client receives postgres_changes events -- without it, one person's entry
+-- never reaches anyone else's screen until they reload. Supabase already adds
+-- new tables on some projects, and re-adding one is a hard error, so only add
+-- what is missing.
+do $$
+declare
+  t text;
+begin
+  foreach t in array array['products', 'transactions', 'exchange_rate'] loop
+    if not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t
+    ) then
+      execute format('alter publication supabase_realtime add table public.%I', t);
+    end if;
+  end loop;
+end $$;
