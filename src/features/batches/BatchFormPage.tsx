@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../auth/AuthContext';
 import { TRANSACTION_TYPES, TYPE_LABELS } from '../transactions/transactionType';
 import type { Product, TransactionType } from '../../types/database';
+import { buildTemplateCsv, parseQuantityCsv } from './quantityCsv';
 
 type PickerProduct = Pick<Product, 'id' | 'name_cn' | 'sku' | 'box_qty' | 'length' | 'width' | 'height'> & {
   current_stock: number;
@@ -24,6 +25,34 @@ export default function BatchFormPage() {
   const [quantities, setQuantities] = useState<Record<number, string>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [importNote, setImportNote] = useState<string | null>(null);
+
+  function downloadTemplate() {
+    const csv = buildTemplateCsv(products);
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `批次模板_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    const { rows, errors } = parseQuantityCsv(text, new Set(products.map((p) => p.id)));
+    // 填进同一个数量表，上传后仍可在下面逐行核对修改
+    setQuantities((q) => {
+      const next = { ...q };
+      for (const r of rows) next[r.productId] = String(r.quantity);
+      return next;
+    });
+    setImportErrors(errors);
+    setImportNote(`已从文件读入 ${rows.length} 行${errors.length ? `，另有 ${errors.length} 行有问题` : ''}`);
+    e.target.value = '';
+  }
 
   useEffect(() => {
     supabase
@@ -148,6 +177,13 @@ export default function BatchFormPage() {
         <span className="text-sm text-gray-500">
           已选 {picked.length} 个商品，合计 {picked.reduce((s, l) => s + l.quantity, 0).toLocaleString()}
         </span>
+        <button type="button" onClick={downloadTemplate} className="rounded-md border border-gray-300 px-3 py-2 text-sm">
+          下载CSV模板
+        </button>
+        <label className="cursor-pointer rounded-md border border-gray-300 px-3 py-2 text-sm">
+          上传CSV
+          <input type="file" accept=".csv,text/csv" onChange={handleUpload} className="hidden" />
+        </label>
         <button
           type="submit"
           disabled={saving}
@@ -158,6 +194,14 @@ export default function BatchFormPage() {
       </div>
 
       {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
+      {importNote && <p className="mb-2 text-sm text-gray-600">{importNote}</p>}
+      {importErrors.length > 0 && (
+        <ul className="mb-2 max-h-32 overflow-auto rounded-md bg-red-50 p-2 text-sm text-red-700">
+          {importErrors.map((msg) => (
+            <li key={msg}>{msg}</li>
+          ))}
+        </ul>
+      )}
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[560px] border-collapse text-sm">
