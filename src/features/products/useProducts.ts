@@ -11,7 +11,7 @@ export function useProducts() {
     const { data, error } = await supabase
       .from('products_with_stock')
       .select('*')
-      .order('name_cn', { ascending: true });
+      .order('id', { ascending: true });
     if (!error && data) setProducts(data as ProductWithStock[]);
     setLoading(false);
   }, []);
