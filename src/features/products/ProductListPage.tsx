@@ -79,7 +79,7 @@ export default function ProductListPage() {
                   </Link>
                 </td>
                 <td className="px-2 py-2 text-gray-400">{p.sku ?? '-'}</td>
-                <td className="px-2 py-2">{p.material_cn ?? p.material_jp ?? '-'}</td>
+                <td className="px-2 py-2">{p.material ?? '-'}</td>
                 <td className="px-2 py-2 text-right">{p.price_jpy ?? '-'}</td>
                 <td className="px-2 py-2 text-right">{p.price_rmb ?? '-'}</td>
                 <td

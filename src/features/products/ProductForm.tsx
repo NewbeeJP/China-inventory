@@ -8,8 +8,7 @@ import type { NewProduct, Product } from '../../types/database';
 const emptyForm: NewProduct = {
   name_cn: '',
   name_en: null,
-  material_cn: null,
-  material_jp: null,
+  material: null,
   sku: null,
   box_qty: null,
   ctn: null,
@@ -86,16 +85,7 @@ export default function ProductForm({ mode }: { mode: 'create' | 'edit' }) {
 
       <section>
         <p className="mb-2 text-sm text-gray-500">材质</p>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="mb-1 block text-xs text-gray-400">材质（中文）</label>
-            <input className="w-full rounded-md border border-gray-300 px-3 py-2" {...field('material_cn')} />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-gray-400">材質（日文）</label>
-            <input className="w-full rounded-md border border-gray-300 px-3 py-2" {...field('material_jp')} />
-          </div>
-        </div>
+        <input className="w-full rounded-md border border-gray-300 px-3 py-2" {...field('material')} />
       </section>
 
       <section>

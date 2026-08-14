@@ -19,8 +19,8 @@ if (!SOURCE_FILE) {
 const COLUMNS = {
   name_cn: 4, // ITEM
   name_en: 5, // romaji / English name
-  material_cn: 7, // 材质
-  material_jp: 8, // 材質
+  material_cn: 7, // 材质（原表这列全空）
+  material_jp: 8, // 材質（原表材质数据实际都在这列）
   sku: 9, // 品番
   box_qty: 17, // 数/箱
   ctn: 18, // CTN
@@ -93,8 +93,8 @@ rows.slice(FIRST_DATA_ROW).forEach((row, i) => {
     family = {
       name_cn: String(row[COLUMNS.name_cn]).trim(),
       name_en: toTextOrNull(row[COLUMNS.name_en]),
-      material_cn: toTextOrNull(row[COLUMNS.material_cn]),
-      material_jp: toTextOrNull(row[COLUMNS.material_jp]),
+      // 两列合并成一个字段：中文列在原表里是空的，数据都在日文列
+      material: toTextOrNull(row[COLUMNS.material_cn]) ?? toTextOrNull(row[COLUMNS.material_jp]),
     };
   }
 
@@ -108,8 +108,7 @@ rows.slice(FIRST_DATA_ROW).forEach((row, i) => {
     excelRow,
     name_cn: suffix ? `${family.name_cn} ${suffix}` : family.name_cn,
     name_en: family.name_en,
-    material_cn: family.material_cn,
-    material_jp: family.material_jp,
+    material: family.material,
     sku: toTextOrNull(row[COLUMNS.sku]),
     box_qty: toNumberOrNull(row[COLUMNS.box_qty]),
     ctn: toNumberOrNull(row[COLUMNS.ctn]),

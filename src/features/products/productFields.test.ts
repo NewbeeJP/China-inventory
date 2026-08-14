@@ -5,7 +5,7 @@ describe('coerceFieldValue', () => {
   test('keeps text fields as typed, even ones that default to null', () => {
     expect(coerceFieldValue('name_cn', '【あかりさん】テープライト')).toBe('【あかりさん】テープライト');
     expect(coerceFieldValue('sku', 'tube-120P')).toBe('tube-120P');
-    expect(coerceFieldValue('material_jp', 'アルミ・プラスチック')).toBe('アルミ・プラスチック');
+    expect(coerceFieldValue('material', 'アルミ・プラスチック')).toBe('アルミ・プラスチック');
     expect(coerceFieldValue('name_en', 'LED TUBE P')).toBe('LED TUBE P');
   });
 

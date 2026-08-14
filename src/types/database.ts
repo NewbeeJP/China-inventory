@@ -4,8 +4,7 @@ export interface Product {
   id: number;
   name_cn: string;
   name_en: string | null;
-  material_cn: string | null;
-  material_jp: string | null;
+  material: string | null;
   sku: string | null;
   box_qty: number | null;
   ctn: number | null;

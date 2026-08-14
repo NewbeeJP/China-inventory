@@ -45,7 +45,7 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-2 gap-3 border-t border-gray-200 pt-3 sm:grid-cols-4">
           <div>
             <p className="text-xs text-gray-400">材质</p>
-            <p className="text-sm">{product.material_cn ?? product.material_jp ?? '-'}</p>
+            <p className="text-sm">{product.material ?? '-'}</p>
           </div>
           <div>
             <p className="text-xs text-gray-400">数/箱</p>

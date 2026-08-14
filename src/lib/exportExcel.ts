@@ -8,7 +8,7 @@ export function productsToRows(products: ProductWithStock[]) {
     编号: p.id,
     品名: p.name_cn,
     品番: p.sku ?? '',
-    材质: p.material_cn ?? p.material_jp ?? '',
+    材质: p.material ?? '',
     数箱: p.box_qty ?? '',
     日元单价: p.price_jpy ?? '',
     单价RMB: p.price_rmb ?? '',
