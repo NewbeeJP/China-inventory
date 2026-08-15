@@ -71,6 +71,7 @@ export interface BatchLine extends Transaction {
 export interface ExchangeRate {
   id: number;
   rmb_to_jpy: number;
+  rmb_to_usd: number | null;
   updated_by: string | null;
   updated_at: string;
 }

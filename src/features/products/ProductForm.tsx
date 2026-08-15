@@ -132,7 +132,7 @@ export default function ProductForm({ mode }: { mode: 'create' | 'edit' }) {
           价格
           {rate && (
             <span className="text-gray-400">
-              （两个价格都手动填写，互不换算；当前汇率 1 RMB = {rate.rmb_to_jpy} JPY，仅供参考）
+              （两个价格都手动填写，互不换算；汇率见右上角，仅供参考）
             </span>
           )}
         </p>

@@ -68,8 +68,10 @@ create table if not exists exchange_rate (
   updated_at timestamptz not null default now(),
   constraint exchange_rate_single_row check (id = 1)
 );
-insert into exchange_rate (id, rmb_to_jpy) values (1, 20.0)
+alter table exchange_rate add column if not exists rmb_to_usd numeric;
+insert into exchange_rate (id, rmb_to_jpy, rmb_to_usd) values (1, 20.0, 0.14)
   on conflict (id) do nothing;
+update exchange_rate set rmb_to_usd = 0.14 where id = 1 and rmb_to_usd is null;
 
 -- Current-stock view. 除了实时库存，还把三个累计数一起算出来，
 -- 对应原表的「库存总数 / 出库总数 / 订单总数」——原来靠手工维护，这里自动汇总。

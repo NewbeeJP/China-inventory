@@ -17,13 +17,18 @@ export function useExchangeRate() {
 
   useRealtimeTable('exchange_rate', refetch);
 
-  const updateRate = useCallback(async (rmbToJpy: number) => {
+  const updateRate = useCallback(async (rmbToJpy: number, rmbToUsd: number | null) => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
     await supabase
       .from('exchange_rate')
-      .update({ rmb_to_jpy: rmbToJpy, updated_by: user?.id, updated_at: new Date().toISOString() })
+      .update({
+        rmb_to_jpy: rmbToJpy,
+        rmb_to_usd: rmbToUsd,
+        updated_by: user?.id,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', 1);
   }, []);
 
