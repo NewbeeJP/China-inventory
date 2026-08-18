@@ -25,12 +25,24 @@ const emptyForm: NewProduct = {
   photo_url: null,
 };
 
+// id 是 identity 列，created_at/updated_at 由数据库维护——一起写回去会被
+// Postgres 拒绝（column id can only be updated to DEFAULT），整条更新失败。
+function editableFields(row: Product): NewProduct {
+  const out = {} as NewProduct;
+  for (const key of Object.keys(emptyForm) as (keyof NewProduct)[]) {
+    (out[key] as NewProduct[keyof NewProduct]) = row[key];
+  }
+  return out;
+}
+
 export default function ProductForm({ mode }: { mode: 'create' | 'edit' }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const { rate } = useExchangeRate();
   const [form, setForm] = useState<NewProduct>(emptyForm);
   const [loading, setLoading] = useState(mode === 'edit');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (mode === 'edit' && id) {
@@ -40,7 +52,7 @@ export default function ProductForm({ mode }: { mode: 'create' | 'edit' }) {
         .eq('id', id)
         .single()
         .then(({ data }) => {
-          if (data) setForm(data as Product);
+          if (data) setForm(editableFields(data as Product));
           setLoading(false);
         });
     }
@@ -57,16 +69,25 @@ export default function ProductForm({ mode }: { mode: 'create' | 'edit' }) {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    setSaving(true);
+    setError(null);
+
     if (mode === 'create') {
       const { data, error } = await supabase.from('products').insert(form).select('id').single();
-      if (!error && data) navigate(`/products/${data.id}`);
-    } else if (id) {
-      const { error } = await supabase
-        .from('products')
-        .update({ ...form, updated_at: new Date().toISOString() })
-        .eq('id', id);
-      if (!error) navigate(`/products/${id}`);
+      setSaving(false);
+      if (error) return setError(`保存失败：${error.message}`);
+      if (data) navigate(`/products/${data.id}`);
+      return;
     }
+
+    if (!id) return setSaving(false);
+    const { error } = await supabase
+      .from('products')
+      .update({ ...form, updated_at: new Date().toISOString() })
+      .eq('id', id);
+    setSaving(false);
+    if (error) return setError(`保存失败：${error.message}`);
+    navigate(`/products/${id}`);
   }
 
   if (loading) return <div className="p-4 text-gray-500">加载中…</div>;
@@ -162,12 +183,18 @@ export default function ProductForm({ mode }: { mode: 'create' | 'edit' }) {
         </div>
       </section>
 
+      {error && <p className="text-sm text-red-600">{error}</p>}
+
       <div className="flex justify-end gap-2 border-t border-gray-200 pt-4">
         <button type="button" onClick={() => navigate(-1)} className="rounded-md border border-gray-300 px-4 py-2 text-sm">
           取消
         </button>
-        <button type="submit" className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white">
-          保存商品
+        <button
+          type="submit"
+          disabled={saving}
+          className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white disabled:opacity-50"
+        >
+          {saving ? '保存中…' : '保存商品'}
         </button>
       </div>
     </form>
