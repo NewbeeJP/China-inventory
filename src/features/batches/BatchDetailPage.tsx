@@ -2,7 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useBatch } from './useBatches';
 import { batchTotals } from './batchTotals';
-import { TYPE_LABELS, TYPE_STYLES } from '../transactions/transactionType';
+import { DOC_LABELS, TYPE_STYLES } from '../transactions/transactionType';
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
@@ -18,12 +18,12 @@ export default function BatchDetailPage() {
   const { batch, lines, loading, refetch } = useBatch(Number(id));
 
   if (loading) return <div className="p-4 text-gray-500">加载中…</div>;
-  if (!batch) return <div className="p-4 text-gray-500">找不到这个批次</div>;
+  if (!batch) return <div className="p-4 text-gray-500">找不到这张单据</div>;
 
   const totals = batchTotals(lines);
 
   async function removeLine(lineId: number) {
-    if (!window.confirm('把这个商品从批次里删掉？对应的库存变动也会一起撤销。')) return;
+    if (!window.confirm('把这个商品从单据里删掉？对应的库存变动也会一起撤销。')) return;
     await supabase.from('transactions').delete().eq('id', lineId);
     refetch();
   }
@@ -31,13 +31,13 @@ export default function BatchDetailPage() {
   return (
     <div className="p-4">
       <Link to="/batches" className="text-sm text-gray-500">
-        ← 返回批次列表
+        ← 返回单据列表
       </Link>
 
       <div className="mb-4 mt-2 flex flex-wrap items-center gap-3">
         <h1 className="text-lg font-medium">{batch.name}</h1>
         <span className={`rounded-md px-2 py-0.5 text-xs ${TYPE_STYLES[batch.type]}`}>
-          {TYPE_LABELS[batch.type]}
+          {DOC_LABELS[batch.type]}
         </span>
         <span className="text-sm text-gray-500">{batch.date}</span>
         {batch.note && <span className="text-sm text-gray-400">{batch.note}</span>}
@@ -95,7 +95,7 @@ export default function BatchDetailPage() {
             })}
           </tbody>
         </table>
-        {lines.length === 0 && <p className="py-4 text-sm text-gray-400">这个批次还没有商品</p>}
+        {lines.length === 0 && <p className="py-4 text-sm text-gray-400">这张单还没有商品</p>}
       </div>
     </div>
   );

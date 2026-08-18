@@ -60,7 +60,7 @@ export interface TransactionWithProduct extends Transaction {
   batch: Pick<Batch, 'id' | 'name'> | null;
 }
 
-// 批次明细行：算汇总要用到商品的箱规、重量、体积和单价
+// 单据明细行：算汇总要用到商品的箱规、重量、体积和单价
 export interface BatchLine extends Transaction {
   product: Pick<
     Product,

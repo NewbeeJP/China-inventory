@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../auth/AuthContext';
-import { TRANSACTION_TYPES, TYPE_LABELS } from '../transactions/transactionType';
+import { DOC_LABELS, TRANSACTION_TYPES } from '../transactions/transactionType';
 import type { Product, TransactionType } from '../../types/database';
 import { buildTemplateCsv, parseQuantityCsv } from './quantityCsv';
 
@@ -33,7 +33,7 @@ export default function BatchFormPage() {
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const a = document.createElement('a');
     a.href = url;
-    a.download = `批次模板_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `单据模板_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -96,7 +96,7 @@ export default function BatchFormPage() {
 
     if (batchError || !batch) {
       setSaving(false);
-      setError(`批次创建失败：${batchError?.message ?? '未知错误'}`);
+      setError(`单据创建失败：${batchError?.message ?? '未知错误'}`);
       return;
     }
 
@@ -113,8 +113,8 @@ export default function BatchFormPage() {
 
     setSaving(false);
     if (linesError) {
-      // 批次已经建出来了，明说，免得以为整个操作没发生
-      setError(`批次已创建，但明细写入失败：${linesError.message}。请打开这个批次补录。`);
+      // 单据已经建出来了，明说，免得以为整个操作没发生
+      setError(`单据已创建，但明细写入失败：${linesError.message}。请打开这张单补录。`);
       return;
     }
     navigate(`/batches/${batch.id}`);
@@ -124,7 +124,7 @@ export default function BatchFormPage() {
     <form onSubmit={handleSubmit} className="p-4">
       <div className="mb-4 grid gap-2 sm:grid-cols-4">
         <div className="sm:col-span-2">
-          <label className="mb-1 block text-xs text-gray-400">批次名称</label>
+          <label className="mb-1 block text-xs text-gray-400">单据名称</label>
           <input
             required
             placeholder="3/16商事海运"
@@ -142,7 +142,7 @@ export default function BatchFormPage() {
           >
             {TRANSACTION_TYPES.map((t) => (
               <option key={t} value={t}>
-                {TYPE_LABELS[t]}
+                {DOC_LABELS[t]}
               </option>
             ))}
           </select>
@@ -189,7 +189,7 @@ export default function BatchFormPage() {
           disabled={saving}
           className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white disabled:opacity-50"
         >
-          {saving ? '保存中…' : '提交这一批'}
+          {saving ? '保存中…' : '提交这张单'}
         </button>
       </div>
 

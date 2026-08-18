@@ -38,7 +38,7 @@ export default function LedgerPage() {
       <div className="mb-4 flex flex-wrap gap-2">
         <input
           type="text"
-          placeholder="搜索品名 / 品番 / 批次 / 备注"
+          placeholder="搜索品名 / 品番 / 单据 / 备注"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="min-w-[160px] flex-[2] rounded-md border border-gray-300 px-3 py-2"
@@ -81,7 +81,7 @@ export default function LedgerPage() {
               <th className="px-2 py-2 font-medium">品番</th>
               <th className="px-2 py-2 font-medium">类型</th>
               <th className="px-2 py-2 text-right font-medium">数量</th>
-              <th className="px-2 py-2 font-medium">批次</th>
+              <th className="px-2 py-2 font-medium">单据</th>
               <th className="px-2 py-2 font-medium">备注</th>
             </tr>
           </thead>

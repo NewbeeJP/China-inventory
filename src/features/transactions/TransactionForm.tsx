@@ -37,7 +37,7 @@ export function TransactionForm({
 
     const payload: NewTransaction & { created_by?: string } = {
       product_id: targetProductId,
-      batch_id: null, // 这里是单笔登记；整批录入走「批次」页面
+      batch_id: null, // 这里是单笔登记；整单录入走「单据」页面
       type,
       quantity: Number(quantity),
       date,

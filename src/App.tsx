@@ -18,7 +18,7 @@ function Layout({ children }: { children: React.ReactNode }) {
       <nav className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-4 py-3 text-sm">
         <div className="flex gap-4">
           <Link to="/" className="font-medium">商品列表</Link>
-          <Link to="/batches" className="font-medium">批次</Link>
+          <Link to="/batches" className="font-medium">单据</Link>
           <Link to="/ledger" className="font-medium">全部流水</Link>
         </div>
         <ExchangeRateBadge />
