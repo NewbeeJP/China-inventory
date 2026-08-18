@@ -25,7 +25,7 @@ export function TransactionForm({
       supabase
         .from('products')
         .select('id, name_cn, sku')
-        .order('name_cn')
+        .order('id')
         .then(({ data }) => setProducts((data as Pick<Product, 'id' | 'name_cn' | 'sku'>[]) ?? []));
     }
   }, [productId]);
@@ -82,7 +82,7 @@ export function TransactionForm({
           </option>
           {products.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.name_cn} {p.sku ? `(${p.sku})` : ''}
+              {String(p.id).padStart(4, '0')} {p.name_cn} {p.sku ? `(${p.sku})` : ''}
             </option>
           ))}
         </select>

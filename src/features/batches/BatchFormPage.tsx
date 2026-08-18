@@ -59,7 +59,7 @@ export default function BatchFormPage() {
     supabase
       .from('products_with_stock')
       .select('id, name_cn, sku, box_qty, length, width, height, current_stock')
-      .order('name_cn')
+      .order('id')
       .then(({ data }) => setProducts((data ?? []) as PickerProduct[]));
   }, []);
 
