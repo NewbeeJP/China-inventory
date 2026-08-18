@@ -12,13 +12,16 @@ export interface ParseResult {
   errors: string[];
 }
 
-const HEADER = ['编号', '品名', '品番', '包装尺寸', '数量'];
+// 表头带 ASCII 标记：Excel 另存成本地编码后中文可能变乱码，
+// 甚至「编」在 Shift-JIS 里根本没有对应字符，靠中文认列必然失败。
+const HEADER = ['编号(ID)', '品名', '品番', '包装尺寸', '数量(QTY)'];
 
 function escapeCell(v: string): string {
-  return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+  // 品名/品番里可能自带换行，写进模板前压成空格，少一个出错来源
+  const flat = v.replace(/[\r\n]+/g, ' ').trim();
+  return /[",]/.test(flat) ? `"${flat.replace(/"/g, '""')}"` : flat;
 }
 
-// Excel 认 BOM 才不会把中文显示成乱码
 export function buildTemplateCsv(products: TemplateProduct[]): string {
   const lines = [HEADER.join(',')];
   for (const p of products) {
@@ -28,46 +31,81 @@ export function buildTemplateCsv(products: TemplateProduct[]): string {
   return '\uFEFF' + lines.join('\r\n') + '\r\n';
 }
 
-function splitLine(line: string): string[] {
-  const out: string[] = [];
-  let cur = '';
-  let quoted = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (quoted) {
-      if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; }
-      else if (c === '"') quoted = false;
-      else cur += c;
-    } else if (c === '"') quoted = true;
-    else if (c === ',') { out.push(cur); cur = ''; }
-    else cur += c;
-  }
-  out.push(cur);
-  return out.map((c) => c.trim());
+// Excel 存 CSV 用系统本地编码，中文机器多为 GBK、日文机器为 Shift-JIS。
+// 同一串字节往往在两种编码下都合法，只是解出来一个是乱码——所以不能
+// 试到第一个不报错就收手，要看谁解出的中文更像模板里的词。
+const MARKERS = ['品名', '品番', '数量', '编号', '包装尺寸'];
+
+function score(text: string): number {
+  return MARKERS.reduce((n, m) => (text.includes(m) ? n + 1 : n), 0);
 }
 
-// 只认「编号」和「数量」两列，其余列是给人看的参考，随便他们怎么改
-export function parseQuantityCsv(text: string, validIds: Set<number>): ParseResult {
-  const clean = text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').trim();
-  const lines = clean.split('\n').filter((l) => l.trim() !== '');
-  if (lines.length === 0) return { rows: [], errors: ['文件是空的'] };
+export function decodeCsvBytes(buffer: ArrayBuffer): string {
+  let best: { text: string; score: number } | null = null;
+  for (const encoding of ['utf-8', 'gbk', 'shift_jis']) {
+    let text: string;
+    try {
+      text = new TextDecoder(encoding, { fatal: true }).decode(buffer);
+    } catch {
+      continue; // 这种编码解不了，换下一种
+    }
+    const s = score(text);
+    if (!best || s > best.score) best = { text, score: s };
+  }
+  return best?.text ?? new TextDecoder('utf-8').decode(buffer);
+}
 
-  const header = splitLine(lines[0]);
-  const idCol = header.indexOf('编号');
-  const qtyCol = header.indexOf('数量');
-  if (idCol === -1 || qtyCol === -1) {
-    return { rows: [], errors: ['表头里必须有「编号」和「数量」两列，请用下载的模板填写'] };
+// 整篇一次性扫描：引号内的换行属于单元格内容，不能当作换行处理。
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = '';
+  let quoted = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quoted) {
+      if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+      else if (c === '"') quoted = false;
+      else cell += c;
+      continue;
+    }
+    if (c === '"') quoted = true;
+    else if (c === ',') { row.push(cell); cell = ''; }
+    else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
+    else if (c !== '\r') cell += c;
+  }
+  row.push(cell);
+  rows.push(row);
+  return rows.map((r) => r.map((c) => c.trim())).filter((r) => r.some((c) => c !== ''));
+}
+
+// 先按名字找；名字被编码破坏时退回位置——模板永远是第一列编号、最后一列数量。
+function locateColumns(header: string[]): { idCol: number; qtyCol: number } {
+  const find = (needles: string[]) =>
+    header.findIndex((h) => needles.some((n) => h.toUpperCase().includes(n)));
+  const byName = { idCol: find(['ID', '编号']), qtyCol: find(['QTY', '数量']) };
+  if (byName.idCol !== -1 && byName.qtyCol !== -1) return byName;
+  return { idCol: 0, qtyCol: header.length - 1 };
+}
+
+export function parseQuantityCsv(text: string, validIds: Set<number>): ParseResult {
+  const table = parseCsv(text.replace(/^\uFEFF/, ''));
+  if (table.length < 2) return { rows: [], errors: ['文件里没有数据行，请用下载的模板填写'] };
+
+  const { idCol, qtyCol } = locateColumns(table[0]);
+  if (idCol === qtyCol) {
+    return { rows: [], errors: ['认不出「编号」和「数量」两列，请用下载的模板填写'] };
   }
 
   const rows: ParsedRow[] = [];
   const errors: string[] = [];
   const seen = new Set<number>();
 
-  lines.slice(1).forEach((line, i) => {
+  table.slice(1).forEach((cells, i) => {
     const lineNo = i + 2;
-    const cells = splitLine(line);
     const rawQty = cells[qtyCol] ?? '';
-    if (rawQty === '') return; // 没填数量的行直接跳过
+    if (rawQty === '') return; // 没填数量的行跳过
 
     const productId = Number(cells[idCol]);
     if (!Number.isInteger(productId) || !validIds.has(productId)) {

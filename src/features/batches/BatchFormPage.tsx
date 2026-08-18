@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../auth/AuthContext';
 import { DOC_LABELS, TRANSACTION_TYPES } from '../transactions/transactionType';
 import type { Product, TransactionType } from '../../types/database';
-import { buildTemplateCsv, parseQuantityCsv } from './quantityCsv';
+import { buildTemplateCsv, decodeCsvBytes, parseQuantityCsv } from './quantityCsv';
 
 type PickerProduct = Pick<Product, 'id' | 'name_cn' | 'sku' | 'box_qty' | 'length' | 'width' | 'height'> & {
   current_stock: number;
@@ -41,7 +41,8 @@ export default function BatchFormPage() {
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const text = await file.text();
+    // 不能用 file.text()：那只按 UTF-8 解，Excel 存的是本地编码
+    const text = decodeCsvBytes(await file.arrayBuffer());
     const { rows, errors } = parseQuantityCsv(text, new Set(products.map((p) => p.id)));
     // 填进同一个数量表，上传后仍可在下面逐行核对修改
     setQuantities((q) => {

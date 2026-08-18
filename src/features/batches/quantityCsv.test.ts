@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { buildTemplateCsv, parseQuantityCsv } from './quantityCsv';
+import { buildTemplateCsv, decodeCsvBytes, parseQuantityCsv } from './quantityCsv';
 
 const ids = new Set([1, 2, 3]);
 
@@ -9,7 +9,7 @@ describe('buildTemplateCsv', () => {
       { id: 1, name_cn: 'LED日光灯 P', sku: 'tube-120P', length: 125, width: 18, height: 17.5 },
     ]);
     expect(csv.startsWith('\uFEFF')).toBe(true);
-    expect(csv).toContain('编号,品名,品番,包装尺寸,数量');
+    expect(csv).toContain('编号(ID),品名,品番,包装尺寸,数量(QTY)');
     expect(csv).toContain('1,LED日光灯 P,tube-120P,125×18×17.5,');
   });
 
@@ -44,22 +44,42 @@ describe('parseQuantityCsv', () => {
   });
 
   test('reports an unknown 编号 with its line number', () => {
-    const result = parseQuantityCsv('编号,数量\n99,500\n', ids);
+    const result = parseQuantityCsv('编号(ID),数量(QTY)\n99,500\n', ids);
     expect(result.rows).toEqual([]);
     expect(result.errors[0]).toContain('第 2 行');
   });
 
   test('rejects a non-positive quantity', () => {
-    expect(parseQuantityCsv('编号,数量\n1,-5\n', ids).errors[0]).toContain('不是有效的正数');
+    expect(parseQuantityCsv('编号(ID),数量(QTY)\n1,-5\n', ids).errors[0]).toContain('不是有效的正数');
   });
 
   test('flags the same product listed twice', () => {
-    const result = parseQuantityCsv('编号,数量\n1,100\n1,200\n', ids);
+    const result = parseQuantityCsv('编号(ID),数量(QTY)\n1,100\n1,200\n', ids);
     expect(result.rows).toEqual([{ productId: 1, quantity: 100 }]);
     expect(result.errors[0]).toContain('重复');
   });
 
-  test('refuses a file without the required headers', () => {
-    expect(parseQuantityCsv('foo,bar\n1,2\n', ids).errors[0]).toContain('编号');
+  test('refuses a single-column file, where id and quantity cannot be told apart', () => {
+    expect(parseQuantityCsv('数量\n500\n', ids).errors[0]).toContain('认不出');
+  });
+
+  test('refuses a file with no data rows', () => {
+    expect(parseQuantityCsv('编号(ID),数量(QTY)\n', ids).errors[0]).toContain('没有数据行');
+  });
+});
+
+describe('decodeCsvBytes', () => {
+  test('reads a UTF-8 file', () => {
+    const bytes = new TextEncoder().encode('编号(ID),数量(QTY)\n1,500\n');
+    expect(decodeCsvBytes(bytes.buffer as ArrayBuffer)).toContain('编号');
+  });
+
+  test('picks Shift-JIS over GBK when both decode but only one reads as the template', () => {
+    // 「品名,品番,数量」的 Shift-JIS 字节。同样这串在 GBK 下也合法，
+    // 只是解出「昳柤…」这种乱码，所以要靠内容评分才选得对。
+    const bytes = new Uint8Array([
+      0x95, 0x69, 0x96, 0xbc, 0x2c, 0x95, 0x69, 0x94, 0xd4, 0x2c, 0x90, 0x94, 0x97, 0xca,
+    ]);
+    expect(decodeCsvBytes(bytes.buffer as ArrayBuffer)).toBe('品名,品番,数量');
   });
 });
