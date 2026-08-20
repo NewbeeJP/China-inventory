@@ -31,6 +31,10 @@ function makeProduct(overrides: Partial<ProductWithStock> = {}): ProductWithStoc
     inbound_total: 0,
     outbound_total: 0,
     order_total: 0,
+    last_inbound_date: null,
+    last_inbound_quantity: null,
+    last_order_date: null,
+    last_order_quantity: null,
     ...overrides,
   };
 }

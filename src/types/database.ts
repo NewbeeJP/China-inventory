@@ -31,6 +31,10 @@ export interface ProductWithStock extends Product {
   inbound_total: number;
   outbound_total: number;
   order_total: number;
+  last_inbound_date: string | null;
+  last_inbound_quantity: number | null;
+  last_order_date: string | null;
+  last_order_quantity: number | null;
 }
 
 export interface Batch {

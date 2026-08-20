@@ -127,13 +127,15 @@ export default function ProductListPage() {
               <th className="px-3 py-2 text-right font-medium">单价(RMB)</th>
               <th className="px-3 py-2 font-medium">包装尺寸</th>
               <th className="px-3 py-2 font-medium">最近出库</th>
+              <th className="px-3 py-2 font-medium">最近入库</th>
+              <th className="w-full px-3 py-2 font-medium">订单（预计入库）</th>
             </tr>
           </thead>
           <tbody>
             {grouped.map(({ name, items }) => (
               <Fragment key={name}>
                 <tr className={`border-b border-gray-200 bg-gray-100 ${category === null ? '' : 'hidden'}`}>
-                  <td colSpan={11} className="whitespace-nowrap px-3 py-2 text-sm font-medium">
+                  <td colSpan={13} className="whitespace-nowrap px-3 py-2 text-sm font-medium">
                     {name}
                     <span className="ml-2 font-normal text-gray-400">
                       {items.length} 个规格 · 合计库存{' '}
@@ -175,7 +177,13 @@ export default function ProductListPage() {
                       {p.length && p.width && p.height ? `${p.length}×${p.width}×${p.height}` : '-'}
                     </td>
                     <td className="whitespace-nowrap px-3 py-1.5 text-gray-500">
-                      {p.latest_date ? `${p.latest_date} 出库 ${p.latest_quantity}` : '-'}
+                      {p.latest_date ? `${p.latest_date}  ${p.latest_quantity}` : '-'}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-1.5 text-gray-500">
+                      {p.last_inbound_date ? `${p.last_inbound_date}  ${p.last_inbound_quantity}` : '-'}
+                    </td>
+                    <td className="w-full whitespace-nowrap px-3 py-1.5 text-gray-500">
+                      {p.last_order_date ? `${p.last_order_date}  ${p.last_order_quantity}` : '-'}
                     </td>
                   </tr>
                 ))}

@@ -88,7 +88,11 @@ select
   latest.quantity as latest_quantity,
   coalesce(agg.inbound_total, 0) as inbound_total,
   coalesce(agg.outbound_total, 0) as outbound_total,
-  coalesce(agg.order_total, 0) as order_total
+  coalesce(agg.order_total, 0) as order_total,
+  last_in.date as last_inbound_date,
+  last_in.quantity as last_inbound_quantity,
+  last_order.date as last_order_date,
+  last_order.quantity as last_order_quantity
 from products p
 left join lateral (
   select
@@ -104,7 +108,23 @@ left join lateral (
   where t2.product_id = p.id and t2.type = 'outbound'
   order by t2.date desc, t2.created_at desc
   limit 1
-) latest on true;
+) latest on true
+-- 最近一次入库（工厂送到仓库）
+left join lateral (
+  select t3.date, t3.quantity
+  from transactions t3
+  where t3.product_id = p.id and t3.type = 'inbound'
+  order by t3.date desc, t3.created_at desc
+  limit 1
+) last_in on true
+-- 最近一次订单：已下单还没到货，算预计入库
+left join lateral (
+  select t4.date, t4.quantity
+  from transactions t4
+  where t4.product_id = p.id and t4.type = 'order'
+  order by t4.date desc, t4.created_at desc
+  limit 1
+) last_order on true;
 
 -- Row Level Security: any authenticated user has full access, no anonymous access, no role tiers
 alter table products enable row level security;
