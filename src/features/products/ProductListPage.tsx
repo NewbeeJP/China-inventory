@@ -8,11 +8,26 @@ export default function ProductListPage() {
   const { products, loading } = useProducts();
   const [search, setSearch] = useState('');
   const [lowStockOnly, setLowStockOnly] = useState(false);
+  // null 表示「全部」
+  const [category, setCategory] = useState<string | null>(null);
 
-  const filtered = useMemo(
-    () => filterProducts(products, { search, lowStockOnly }),
-    [products, search, lowStockOnly]
-  );
+  // 分类标签的数量始终按全部商品算，切换标签时数字不会跳
+  const categories = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const p of products) map.set(p.name_cn, (map.get(p.name_cn) ?? 0) + 1);
+    return [...map].map(([name, count]) => ({ name, count }));
+  }, [products]);
+
+  const filtered = useMemo(() => {
+    const base = filterProducts(products, { search, lowStockOnly });
+    return category === null ? base : base.filter((p) => p.name_cn === category);
+  }, [products, search, lowStockOnly, category]);
+
+  // 搜索时退回「全部」，否则在某个分类里搜别的东西会一无所获
+  function handleSearch(value: string) {
+    setSearch(value);
+    if (value.trim() !== '') setCategory(null);
+  }
 
   // 同一品名的多个规格归到一组，跟原来 Excel 的排布一致
   const grouped = useMemo(() => {
@@ -34,7 +49,7 @@ export default function ProductListPage() {
           type="text"
           placeholder="搜索品名 / 品番"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => handleSearch(e.target.value)}
           className="min-w-[160px] flex-[2] rounded-md border border-gray-300 px-3 py-2"
         />
         <button
@@ -59,6 +74,28 @@ export default function ProductListPage() {
         </button>
       </div>
 
+      <div className="mb-3 flex flex-wrap gap-1.5">
+        {[{ name: '全部', count: products.length, value: null as string | null }, ...categories.map((c) => ({ ...c, value: c.name }))].map(
+          (tab) => {
+            const active = category === tab.value;
+            return (
+              <button
+                key={tab.name}
+                onClick={() => setCategory(tab.value)}
+                className={`rounded-md border px-2.5 py-1 text-sm ${
+                  active
+                    ? 'border-gray-900 bg-gray-900 text-white'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                {tab.name}
+                <span className={active ? 'ml-1 text-gray-300' : 'ml-1 text-gray-400'}>{tab.count}</span>
+              </button>
+            );
+          }
+        )}
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <thead>
@@ -79,7 +116,7 @@ export default function ProductListPage() {
           <tbody>
             {grouped.map(({ name, items }) => (
               <Fragment key={name}>
-                <tr className="border-b border-gray-200 bg-gray-100">
+                <tr className={`border-b border-gray-200 bg-gray-100 ${category === null ? '' : 'hidden'}`}>
                   <td colSpan={11} className="whitespace-nowrap px-3 py-2 text-sm font-medium">
                     {name}
                     <span className="ml-2 font-normal text-gray-400">
