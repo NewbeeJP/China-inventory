@@ -13,10 +13,18 @@ export default function ProductListPage() {
 
   // 分类标签的数量始终按全部商品算，切换标签时数字不会跳
   const categories = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const p of products) map.set(p.name_cn, (map.get(p.name_cn) ?? 0) + 1);
-    return [...map].map(([name, count]) => ({ name, count }));
+    const map = new Map<string, { count: number; stock: number }>();
+    for (const p of products) {
+      const c = map.get(p.name_cn) ?? { count: 0, stock: 0 };
+      map.set(p.name_cn, { count: c.count + 1, stock: c.stock + p.current_stock });
+    }
+    return [...map].map(([name, v]) => ({ name, ...v }));
   }, [products]);
+
+  const totalStock = useMemo(
+    () => products.reduce((sum, p) => sum + p.current_stock, 0),
+    [products]
+  );
 
   const filtered = useMemo(() => {
     const base = filterProducts(products, { search, lowStockOnly });
@@ -42,8 +50,38 @@ export default function ProductListPage() {
 
   if (loading) return <div className="p-4 text-gray-500">加载中…</div>;
 
+  const sidebarItems = [
+    { name: '全部', count: products.length, stock: totalStock, value: null as string | null },
+    ...categories.map((c) => ({ ...c, value: c.name })),
+  ];
+
   return (
-    <div className="p-4">
+    <div className="flex flex-col gap-4 p-4 lg:flex-row">
+      {/* 分类栏：窄屏时横过来排在上面，宽屏时固定在左侧跟着滚 */}
+      <aside className="shrink-0 lg:w-56">
+        <p className="mb-2 px-1 text-xs text-gray-400">商品分类</p>
+        <nav className="flex gap-1 overflow-x-auto lg:sticky lg:top-4 lg:max-h-[calc(100vh-6rem)] lg:flex-col lg:overflow-y-auto">
+          {sidebarItems.map((item) => {
+            const active = category === item.value;
+            return (
+              <button
+                key={item.name}
+                onClick={() => setCategory(item.value)}
+                className={`shrink-0 rounded-md px-3 py-2 text-left text-sm lg:w-full ${
+                  active ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <span className="block truncate">{item.name}</span>
+                <span className={`block text-xs ${active ? 'text-gray-300' : 'text-gray-400'}`}>
+                  {item.count} 个规格 · 库存 {item.stock.toLocaleString()}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
+
+      <div className="min-w-0 flex-1">
       <div className="mb-4 flex flex-wrap gap-2">
         <input
           type="text"
@@ -72,28 +110,6 @@ export default function ProductListPage() {
         >
           导出 Excel
         </button>
-      </div>
-
-      <div className="mb-3 flex flex-wrap gap-1.5">
-        {[{ name: '全部', count: products.length, value: null as string | null }, ...categories.map((c) => ({ ...c, value: c.name }))].map(
-          (tab) => {
-            const active = category === tab.value;
-            return (
-              <button
-                key={tab.name}
-                onClick={() => setCategory(tab.value)}
-                className={`rounded-md border px-2.5 py-1 text-sm ${
-                  active
-                    ? 'border-gray-900 bg-gray-900 text-white'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                {tab.name}
-                <span className={active ? 'ml-1 text-gray-300' : 'ml-1 text-gray-400'}>{tab.count}</span>
-              </button>
-            );
-          }
-        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -168,6 +184,8 @@ export default function ProductListPage() {
           </tbody>
         </table>
       </div>
+      </div>
     </div>
   );
 }
+
