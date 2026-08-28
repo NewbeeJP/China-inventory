@@ -11,6 +11,7 @@ import { ErrorBoundary } from './ErrorBoundary';
 import BatchListPage from './features/batches/BatchListPage';
 import BatchFormPage from './features/batches/BatchFormPage';
 import BatchDetailPage from './features/batches/BatchDetailPage';
+import GuidePage from './features/help/GuidePage';
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -20,6 +21,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           <Link to="/" className="font-medium">商品列表</Link>
           <Link to="/batches" className="font-medium">单据</Link>
           <Link to="/ledger" className="font-medium">全部流水</Link>
+          <Link to="/guide" className="text-gray-500">使用指南</Link>
         </div>
         <ExchangeRateBadge />
       </nav>
@@ -42,6 +44,7 @@ export default function App() {
           <Route path="/batches" element={<ProtectedRoute><Layout><BatchListPage /></Layout></ProtectedRoute>} />
           <Route path="/batches/new" element={<ProtectedRoute><Layout><BatchFormPage /></Layout></ProtectedRoute>} />
           <Route path="/batches/:id" element={<ProtectedRoute><Layout><BatchDetailPage /></Layout></ProtectedRoute>} />
+          <Route path="/guide" element={<ProtectedRoute><Layout><GuidePage /></Layout></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

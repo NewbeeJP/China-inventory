@@ -4,7 +4,29 @@ import { useProducts } from './useProducts';
 import { filterProducts, isLowStock } from '../../lib/inventory';
 import { exportProductsToExcel } from '../../lib/exportExcel';
 
+// 只提示一次；读写都包起来，无痕窗口或禁用存储时不至于崩掉
+const SEEN_KEY = 'guide-banner-dismissed';
+
+function readDismissed(): boolean {
+  try {
+    return localStorage.getItem(SEEN_KEY) === '1';
+  } catch {
+    return true; // 存不了就别一直弹
+  }
+}
+
 export default function ProductListPage() {
+  const [guideDismissed, setGuideDismissed] = useState(readDismissed);
+
+  function dismissGuide() {
+    setGuideDismissed(true);
+    try {
+      localStorage.setItem(SEEN_KEY, '1');
+    } catch {
+      // 存不下就算了，下次再提示一遍也无妨
+    }
+  }
+
   const { products, loading } = useProducts();
   const [search, setSearch] = useState('');
   const [lowStockOnly, setLowStockOnly] = useState(false);
@@ -82,6 +104,19 @@ export default function ProductListPage() {
       </aside>
 
       <div className="min-w-0 flex-1">
+      {!guideDismissed && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm">
+          <span>第一次用？</span>
+          <Link to="/guide" className="font-medium underline">
+            看看使用指南
+          </Link>
+          <span className="text-gray-500">— 怎么录一次入库、怎么改商品资料，都有分步说明</span>
+          <button onClick={dismissGuide} className="ml-auto text-gray-400 hover:text-gray-700">
+            知道了
+          </button>
+        </div>
+      )}
+
       <div className="mb-4 flex flex-wrap gap-2">
         <input
           type="text"
